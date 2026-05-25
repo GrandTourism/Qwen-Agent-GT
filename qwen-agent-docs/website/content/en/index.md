@@ -1,23 +1,57 @@
-# Qwen Agent Documentation
+# Qwen Agent API Specification
 
-Welcome to the Qwen Agent documentation. Qwen Agent is an open-source AI agent framework that helps you build powerful LLM applications based on the instruction following, tool usage, planning, and memory capabilities of Qwen.
+```yaml
+openapi: 3.0.3
+info:
+  title: Qwen Agent Framework
+  version: 2.0.0
+  description: |
+    AI agent framework for building LLM applications with:
+    - Instruction following
+    - Tool usage
+    - Planning capabilities
+    - Memory management
+tags:
+  - name: guide
+    description: Core API documentation
+  - name: benchmarks
+    description: Performance evaluation metrics
+```
 
-## Documentation Sections
+## API Endpoints
 
-### [Guide](./guide/)
+### Guide API
+- **Path**: `/guide/`
+- **Methods**: [`GET`](./guide/)
+- **Capabilities**:
+  - Installation configuration
+  - Feature enumeration
+  - Parameter specification
+  - Module interfaces
+  - Development patterns
 
-- Understanding how to use Qwen-Agent, you will learn the following from this section:
+### Benchmarks API
+- **Path**: `/benchmarks/`
+- **Methods**: [`GET`](./benchmarks/)
+- **Metrics**:
+  - `DeepPlanning`: Multi-step planning evaluation
+    - `TravelPlanning`: Itinerary generation with constraints
+    - `ShoppingPlanning`: Budget optimization with preferences
 
-  - Installation and Running Guide
-  - Features and Capabilities
-  - Configuration Options
-  - Core Modules
-  - Developer Guide
+## Schema Reference
 
-### [Benchmarks](./benchmarks/)
-
-Explore Qwen Agent's performance across different tasks. This section covers:
-
-- DeepPlanning benchmark
-    - TravelPlanning benchmark
-    - ShoppingPlanning benchmark
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QwenAgent",
+  "type": "object",
+  "properties": {
+    "framework": {"type": "string", "const": "qwen-agent"},
+    "version": {"type": "string"},
+    "capabilities": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["instruction_following", "tool_usage", "planning", "memory"]}
+    }
+  }
+}
+```

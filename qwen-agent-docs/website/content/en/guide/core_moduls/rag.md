@@ -1,50 +1,75 @@
-# RAG (Retrieval-Augmented Generation)
+# RAG (Retrieval-Augmented Generation) API
 
-Qwen-Agent provides built-in RAG (Retrieval-Augmented Generation) capabilities to enhance responses by retrieving relevant content from a given set of documents. This allows the language model to ground its answers in specific, user-provided knowledge sources.
+## Overview
+
+Document-based retrieval system for grounding LLM responses in user-provided knowledge sources.
+
+```yaml
+openapi: 3.0.3
+info:
+  title: Qwen-Agent RAG API
+  version: 2.0.0
+```
 
 ## Core Components
 
-### 1. Document Parsing
-- Supported file types: `.pdf`, `.docx`, `.pptx`, `.txt`, `.csv`, `.tsv`, `.xlsx`, `.xls`, and `.html`.
-- Documents are split into text chunks using a configurable chunk size (`parser_page_size`, default: 500 tokens).
-- Parsing is handled by the `DocParser` tool, which converts files into structured records ready for retrieval.
+### Document Parser
 
-### 2. Keyword-Based Retrieval with BM25
-- By default, Qwen-Agent uses the BM25 algorithm (via the `rank_bm25` library) for sparse keyword matching.
-- The user query (or auto-generated keywords) is matched against document chunks to find the most relevant passages.
-- Retrieval strategies can be customized via `rag_searchers` (e.g., `keyword_search`, `front_page_search`, or hybrid combinations).
-- Retrieved results are truncated to fit within a token limit (`max_ref_token`, default: 20000 tokens) to avoid exceeding context windows.
+| Property | Value |
+|----------|-------|
+| Supported Formats | `.pdf`, `.docx`, `.pptx`, `.txt`, `.csv`, `.tsv`, `.xlsx`, `.xls`, `.html` |
+| Chunk Size | `parser_page_size` (default: 500 tokens) |
+| Output | Structured text chunks |
 
-### Optional: Keyword Generation
-- To improve retrieval accuracy, Qwen-Agent can use an LLM to generate structured, multilingual keywords from the user query.
-- Default strategy: `SplitQueryThenGenKeyword` — decomposes the query and produces comma-separated keywords in both Chinese and English.
-- If no LLM is available, the original query is used directly for retrieval.
+### Retrieval Engine
 
-## How to Use
+| Algorithm | Library | Strategy |
+|-----------|---------|----------|
+| BM25 | `rank_bm25` | Sparse keyword matching |
+| Keyword Generation | LLM-based | Multilingual query decomposition |
 
-RAG is automatically enabled in the `Assistant` agent:
+### Configuration
+
+```json
+{
+  "max_ref_token": 20000,
+  "rag_searchers": ["keyword_search", "front_page_search"]
+}
+```
+
+## Usage
 
 ```python
 from qwen_agent.agents import Assistant
 from qwen_agent.llm.schema import Message, ContentItem
 
-agent = Assistant(...)
-response = agent.run(messages=[Message(role="user", content=[ContentItem(text="How long is the product warranty?"), ContentItem(file="manual.pdf")])])
+agent = Assistant(
+    llm={'model': 'qwen-max'},
+    files=['manual.pdf']
+)
+
+response = agent.run(messages=[
+    Message(role="user", content=[
+        ContentItem(text="How long is the product warranty?"),
+        ContentItem(file="manual.pdf")
+    ])
+])
 ```
 
-Under the hood, Qwen-Agent:
-1. Parses the provided files into text chunks,
-2. Retrieves relevant chunks based on the query using BM25,
-3. Returns the retrieved content as a structured JSON string (via the `retrieval` tool).
+## Processing Pipeline
+
+1. **Parse**: Convert files to text chunks via `DocParser`
+2. **Retrieve**: Match query against chunks using BM25
+3. **Return**: Structured JSON via `retrieval` tool
 
 ## Dependencies
-
-RAG functionality requires additional Python packages. Install them with:
 
 ```bash
 pip install "qwen-agent[rag]"
 ```
 
----
+## Characteristics
 
-> In summary, Qwen-Agent’s RAG implementation offers a lightweight yet effective retrieval system based on document chunking and BM25 keyword matching—ideal for augmenting LLM responses with precise, source-grounded information without requiring embeddings or vector databases.
+- Lightweight retrieval without embeddings/vector databases
+- Source-grounded information augmentation
+- Configurable token limits for context window management

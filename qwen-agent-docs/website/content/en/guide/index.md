@@ -1,57 +1,49 @@
-# Qwen-Agent Overview
+# Qwen-Agent API Reference
 
-Qwen-Agent is a framework for developing LLM applications based on the instruction following, tool usage, planning, and memory capabilities of Qwen.
+```yaml
+openapi: 3.0.3
+info:
+  title: Qwen-Agent Core API
+  version: 2.0.0
+  description: |
+    Framework for LLM application development with:
+    - Instruction following
+    - Tool usage
+    - Planning
+    - Memory capabilities
+```
 
-## Chat with an Agent
+## Quick Start
 
 ```python
 from qwen_agent.agents import Assistant
 from qwen_agent.gui import WebUI
-from qwen_agent.utils.output_beautify import typewriter_print
 
-# Define llm config
-llm_cfg = {
-    'model': 'qwen3-max',
-    'model_type': 'qwen_dashscope',
-}
-# Define tools
+# Configuration
+llm_cfg = {'model': 'qwen3-max', 'model_type': 'qwen_dashscope'}
+
+# Tools specification
 tools = [
-    {
-        'mcpServers': {  # You can specify the MCP configuration file
-            'time': {
-                'command': 'uvx',
-                'args': ['mcp-server-time', '--local-timezone=Asia/Shanghai']
-            },
-            'fetch': {
-                'command': 'uvx',
-                'args': ['mcp-server-fetch']
-            }
-        }
-    },
-    'image_gen',  # Built-in example tools
+    {'mcpServers': {'time': {'command': 'uvx', 'args': ['mcp-server-time']}}},
+    'image_gen'
 ]
-# Define agent
-bot = Assistant(llm=llm_cfg,
-                function_list=tools,
-                name='Qwen3 Tool-calling Demo',
-                description="I'm a demo using the Qwen3 tool calling. Welcome to add and play with your own tools!")
 
-# === Chat ===
+# Agent instantiation
+bot = Assistant(
+    llm=llm_cfg,
+    function_list=tools,
+    name='Qwen3 Tool-calling Demo'
+)
+
+# Execution
 messages = [{'role': 'user', 'content': 'draw a cute dog'}]
-response_plain_text = ''
 for response in bot.run(messages=messages):
-    response_plain_text = typewriter_print(response, response_plain_text)
-
-# === Chat on GUI ===
-chatbot_config = {
-    'prompt.suggestions': [
-        'draw a cute dog'
-    ]
-}
-WebUI(
-    bot,
-    chatbot_config=chatbot_config,
-).run()
+    print(response)
 ```
 
-See the [Installation instructions](./get_started/install.md) and [Quickstart guide](./get_started/quickstart.md) to get started building your own agents and applications with Qwen-Agent.
+## Related Endpoints
+
+- [`/guide/get_started/install`](./get_started/install.md) - Installation procedures
+- [`/guide/get_started/quickstart`](./get_started/quickstart.md) - Quick start guide
+- [`/guide/get_started/features`](./get_started/features.md) - Feature enumeration
+- [`/guide/get_started/configuration`](./get_started/configuration.md) - Configuration schema
