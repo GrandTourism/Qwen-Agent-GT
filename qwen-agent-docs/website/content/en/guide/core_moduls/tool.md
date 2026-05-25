@@ -1,99 +1,107 @@
-# Tool Introduction
+# Tool API
 
-This document introduces the usage and development process of the Tool class.
-Please refer to the [Configuration](../get_started/configuration.md) for detailed parameter configuration.
+## Overview
 
-## 1. Tool Usage
+Standardized interface for tool execution and registration.
 
-### 1.1. Direct External Call
-Tools uniformly utilize the `.call(params)` interface for calling, where you pass in the necessary parameters for the tool.
-The tool then returns the results after execution, with the return type being `Union[str, list, dict]`.
+```yaml
+openapi: 3.0.3
+info:
+  title: Qwen-Agent Tool API
+  version: 2.0.0
+```
 
-For example, to directly call a image generation tool:
+## Interface Specification
 
-```py
+### Base Class
+
+```python
+class BaseTool:
+    name: str
+    description: str
+    parameters: dict
+    
+    def call(self, params: str, **kwargs) -> Union[str, list, dict]:
+        """Execute tool with given parameters"""
+```
+
+### Registration Decorator
+
+```python
+def register_tool(name: str):
+    """Register tool in TOOL_REGISTRY"""
+```
+
+## Usage
+
+### Direct Invocation
+
+```python
 from qwen_agent.tools import ImageGen
 
 tool = ImageGen()
-res = tool.call(params = {'prompt': 'a cute cat'})
-print(res)
+result = tool.call(params={'prompt': 'a cute cat'})
+print(result)  # Returns: str | list | dict
 ```
 
-### 1.2. Internal call by Agent
+### Agent Integration
 
-In the Agent, the `_call_tool(...)` function is used to call tools, with each Agent instance capable of calling the tools that were initialized and assigned to it.
-The tools can be passed in through `function_list: Optional[List[Union[str, Dict, BaseTool]]] = None` parameter.
-The supported input types include the tool name, tool configuration file, or the tool object itself.
-For instance, you can use `code_interpreter`, `{'name': 'code_interpreter', 'timeout': 10}`, or `CodeInterpreter()`.
+Tools passed via `function_list` parameter:
 
-Note that for the convenience of inputting tool results into LLMs, the Agent’s `_call_tool(...)` interface converts all returned results from the tools into string type. For more details, see the [Agent class](../../../../../../qwen_agent/agent.py).
+| Input Type | Example | Description |
+|------------|---------|-------------|
+| `str` | `'code_interpreter'` | Pre-registered tool name |
+| `dict` | `{'name': 'weather', 'api_key': '...'}` | Tool configuration |
+| `BaseTool` | `CodeInterpreter()` | Tool instance |
 
-## 2. Tool Development
+## Custom Tool Development
 
-Qwen-Agent provides a mechanism for registering tools. For example, to register your own image generation tool:
-- Specify the tool’s name, description, and parameters. Note that the string passed to `@register_tool('my_image_gen')` is automatically added as the `.name` attribute of the class and will serve as the unique identifier for the tool.
-- Implement the `call(...)` function.
+### Using Decorator
 
-```py
-import urllib.parse
-import json5
-import json
+```python
 from qwen_agent.tools.base import BaseTool, register_tool
-# Add a custom tool named my_image_gen：
+
 @register_tool('my_image_gen')
 class MyImageGen(BaseTool):
-    description = 'AI painting (image generation) service, input text description, and return the image URL drawn based on text information.'
+    description = 'AI image generation service'
     parameters = {
         'type': 'object',
         'properties': {
             'prompt': {
-                'description':
-                    'Detailed description of the desired content of the generated image, such as details of characters, environment, actions, etc., in English.',
-                'type':
-                    'string',
+                'type': 'string',
+                'description': 'Image description in English'
             }
         },
-        'required': ['prompt'],
+        'required': ['prompt']
     }
-
+    
     def call(self, params: str, **kwargs) -> str:
         prompt = json5.loads(params)['prompt']
-        prompt = urllib.parse.quote(prompt)
-        return json.dumps(
-            {'image_url': f'https://image.pollinations.ai/prompt/{prompt}'},
-            ensure_ascii=False)
+        return json.dumps({'image_url': f'https://api.example.com/{prompt}'})
 ```
 
-Once the tools are registered, they can be used as mentioned above.
+### Direct Class Definition
 
-If you prefer not to use the registration method, you can also directly define a tool class and then pass the tool object to the Agent (unregistered tools do not support passing the tool name or configuration file).
-
-```py
-import urllib.parse
-import json5
-import json
+```python
 from qwen_agent.tools.base import BaseTool
 
 class MyImageGen(BaseTool):
     name = 'my_image_gen'
-    description = 'AI painting (image generation) service, input text description, and return the image URL drawn based on text information.'
-    parameters = {
-        'type': 'object',
-        'properties': {
-            'prompt': {
-                'description':
-                    'Detailed description of the desired content of the generated image, such as details of characters, environment, actions, etc., in English.',
-                'type':
-                    'string',
-            }
-        },
-        'required': ['prompt'],
-    }
-
+    description = 'AI image generation service'
+    parameters = {...}
+    
     def call(self, params: str, **kwargs) -> str:
-        prompt = json5.loads(params)['prompt']
-        prompt = urllib.parse.quote(prompt)
-        return json.dumps(
-            {'image_url': f'https://image.pollinations.ai/prompt/{prompt}'},
-            ensure_ascii=False)
+        # Implementation
+        pass
 ```
+
+## Built-in Tools
+
+| Tool | Description |
+|------|-------------|
+| `code_interpreter` | Python code execution in Docker sandbox |
+| `web_search` | Web search queries |
+| `web_extractor` | Web page content extraction |
+| `image_search` | Reverse image search |
+| `image_zoom_in_tool` | Image region cropping |
+| `retrieval` | RAG-based document retrieval |
